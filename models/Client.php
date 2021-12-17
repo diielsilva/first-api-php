@@ -86,4 +86,16 @@ class Client
             die;
         }
     }
+
+    public function getAllClients()
+    {
+        $connection = Connection::openConnection();
+        $sql = "SELECT * FROM clients";
+        $statement = $connection->prepare($sql);
+        $statement->execute();
+        $result = $statement->fetchAll(PDO::FETCH_ASSOC);
+        Connection::closeConnection($connection);
+        return $result;
+    }
+
 }

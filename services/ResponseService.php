@@ -56,7 +56,7 @@ class ResponseService
                 }
             }
         }
-        
+
         $this->getResponse();
     }
 
@@ -80,5 +80,41 @@ class ResponseService
         $updatedAt = filter_var($client->getUpdatedAt(), FILTER_SANITIZE_SPECIAL_CHARS);
         $sanitizedInputs = [0 => $name, 1 => $phone, 2 => $createdAt, 3 => $updatedAt];
         return $sanitizedInputs;
+    }
+
+    public function getAllClients()
+    {
+        $this->getResponseHeaders();
+
+        if ($_SERVER["REQUEST_METHOD"] != "GET") {
+            $this->resultJson = [
+                "error" => "Método não permitido!"
+            ];
+        } else {
+
+            $client = new Client();
+            $allClients = $client->getAllClients();
+
+            if (count($allClients) == 0) {
+                $this->resultJson = [
+                    "message" => "Nenhum cliente encontrado!"
+                ];
+            } else {
+                $this->resultJson = [
+                    "result" => []
+                ];
+                for ($index = 0; $index < count($allClients); $index++) {
+                    $this->resultJson["result"][] = [
+                        "id" => $allClients[$index]["id"],
+                        "name" => $allClients[$index]["name"],
+                        "phone" => $allClients[$index]["phone"],
+                        "createdAt" => $allClients[$index]["created_at"],
+                        "updatedAt" => $allClients[$index]["updated_at"]
+                    ];
+                }
+            }
+        }
+
+        $this->getResponse();
     }
 }
