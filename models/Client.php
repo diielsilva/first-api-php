@@ -64,7 +64,7 @@ class Client
     {
         try {
             $connection = Connection::openConnection();
-            $sql = "INSERT INTO clients VALUES (?,?,?,?,?) LIMIT 1";
+            $sql = "INSERT INTO clients VALUES (?,?,?,?,?)";
             $statement = $connection->prepare($sql);
             $statement->bindValue(1, null);
             $statement->bindValue(2, $client->getName());
