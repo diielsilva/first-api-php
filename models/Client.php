@@ -116,4 +116,26 @@ class Client
         Connection::closeConnection($connection);
         return $rowCount;
     }
+
+    public function updateClient($client)
+    {
+        $connection = Connection::openConnection();
+        $sql = "UPDATE clients SET name = ?, phone = ?, updated_at = ? WHERE id = ? LIMIT 1";
+        $statement = $connection->prepare($sql);
+        $statement->bindValue(1, $client->getName());
+        $statement->bindValue(2, $client->getPhone());
+        $statement->bindValue(3, $client->getUpdatedAt());
+        $statement->bindValue(4, $client->getId());
+        $connection->beginTransaction();
+        $statement->execute();
+        $rowCount = $statement->rowCount();
+
+        if ($rowCount != 1) {
+            $connection->rollBack();
+        } else {
+            $connection->commit();
+        }
+        Connection::closeConnection($connection);
+        return $rowCount;
+    }
 }

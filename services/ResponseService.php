@@ -28,14 +28,9 @@ class ResponseService
                 "error" => "Método não permitido!"
             ];
         } else {
-            $jsonDecoded = json_decode(file_get_contents("php://input"), true);
-            $client = new Client();
-            $client->setName($jsonDecoded["name"]);
-            $client->setPhone($jsonDecoded["phone"]);
-            $client->setCreatedAt($jsonDecoded["createdAt"]);
-            $client->setUpdatedAt($jsonDecoded["updatedAt"]);
 
-            $sanitizedInputs = $this->sanitizeInsertClientInputs($client);
+            $jsonDecoded = json_decode(file_get_contents("php://input"), true);
+            $sanitizedInputs = $this->sanitizeInsertClientInputs($jsonDecoded);
             $hasNull = $this->hasInputNull($sanitizedInputs);
 
             if ($hasNull) {
@@ -43,6 +38,11 @@ class ResponseService
                     "error" => "Inputs inválidos, tente novamente!"
                 ];
             } else {
+                $client = new Client();
+                $client->setName($sanitizedInputs[0]);
+                $client->setPhone($sanitizedInputs[1]);
+                $client->setCreatedAt($sanitizedInputs[2]);
+                $client->setUpdatedAt($sanitizedInputs[3]);
                 $result = $client->storeClient($client);
 
                 if ($result != 1) {
@@ -72,12 +72,12 @@ class ResponseService
         return $hasNull;
     }
 
-    public function sanitizeInsertClientInputs($client)
+    public function sanitizeInsertClientInputs($jsonDecoded)
     {
-        $name = filter_var($client->getName(), FILTER_SANITIZE_SPECIAL_CHARS);
-        $phone = filter_var($client->getPhone(), FILTER_SANITIZE_SPECIAL_CHARS);
-        $createdAt = filter_var($client->getCreatedAt(), FILTER_SANITIZE_SPECIAL_CHARS);
-        $updatedAt = filter_var($client->getUpdatedAt(), FILTER_SANITIZE_SPECIAL_CHARS);
+        $name = filter_var($jsonDecoded["name"], FILTER_SANITIZE_STRING);
+        $phone = filter_var($jsonDecoded["phone"], FILTER_SANITIZE_STRING);
+        $createdAt = filter_var($jsonDecoded["createdAt"], FILTER_SANITIZE_STRING);
+        $updatedAt = filter_var($jsonDecoded["updatedAt"], FILTER_SANITIZE_STRING);
         $sanitizedInputs = [0 => $name, 1 => $phone, 2 => $createdAt, 3 => $updatedAt];
         return $sanitizedInputs;
     }
@@ -120,7 +120,7 @@ class ResponseService
 
     public function sanitizeDeleteClient($inputs)
     {
-        $id = filter_var($inputs["id"], FILTER_SANITIZE_SPECIAL_CHARS);
+        $id = filter_var($inputs["id"], FILTER_SANITIZE_STRING);
         $sanitizedInputs = [0 => $id];
         return $sanitizedInputs;
     }
@@ -158,5 +158,55 @@ class ResponseService
             }
         }
         $this->getResponse();
+    }
+
+    public function updateClient()
+    {
+        $this->getResponseHeaders();
+
+        if ($_SERVER["REQUEST_METHOD"] != "PUT") {
+            $this->resultJson = [
+                "error" => "Método não permitido!"
+            ];
+        } else {
+            $jsonDecoded = json_decode(file_get_contents("php://input"), true);
+            $sanitizedInputs = $this->sanitizeUpdateClientInputs($jsonDecoded);
+            $hasNull = $this->hasInputNull($sanitizedInputs);
+
+            if ($hasNull) {
+                $this->resultJson = [
+                    "error" => "Inputs inválidos, tente novamente!"
+                ];
+            } else {
+                $client = new Client();
+                $client->setId($sanitizedInputs[0]);
+                $client->setName($sanitizedInputs[1]);
+                $client->setPhone($sanitizedInputs[2]);
+                $client->setUpdatedAt($sanitizedInputs[3]);
+                $rowCount = $client->updateClient($client);
+
+                if ($rowCount != 1) {
+                    $this->resultJson = [
+                        "error" => "Algo deu errado, tente novamente!"
+                    ];
+                } else {
+                    $this->resultJson = [
+                        "message" => "Cliente editado com sucesso!"
+                    ];
+                }
+            }
+        }
+
+        $this->getResponse();
+    }
+
+    public function sanitizeUpdateClientInputs($jsonDecoded)
+    {
+        $id = filter_var($jsonDecoded["id"], FILTER_SANITIZE_STRING);
+        $name = filter_var($jsonDecoded["name"], FILTER_SANITIZE_STRING);
+        $phone = filter_var($jsonDecoded["phone"], FILTER_SANITIZE_STRING);
+        $updatedAt = filter_var($jsonDecoded["updatedAt"], FILTER_SANITIZE_STRING);
+        $sanitizedInputs = [0 => $id, 1 => $name, 2 => $phone, 3 => $updatedAt];
+        return $sanitizedInputs;
     }
 }
