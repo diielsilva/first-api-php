@@ -34,19 +34,51 @@ class ResponseService
             $client->setPhone($jsonDecoded["phone"]);
             $client->setCreatedAt($jsonDecoded["createdAt"]);
             $client->setUpdatedAt($jsonDecoded["updatedAt"]);
-            $result = $client->storeClient($client);
-            
-            if ($result != 1) {
+
+            $sanitizedInputs = $this->sanitizeClientInputs($client);
+            $hasNull = $this->hasInputNull($sanitizedInputs);
+
+            if ($hasNull) {
                 $this->resultJson = [
-                    "error" => "Algo deu errado, tente novamente!"
+                    "error" => "Inputs inválidos, tente novamente!"
                 ];
             } else {
-                $this->resultJson = [
-                    "message" =>  "Cliente cadastrado com sucesso!",
-                ];
+                $result = $client->storeClient($client);
+
+                if ($result != 1) {
+                    $this->resultJson = [
+                        "error" => "Algo deu errado, tente novamente!"
+                    ];
+                } else {
+                    $this->resultJson = [
+                        "message" =>  "Cliente cadastrado com sucesso!",
+                    ];
+                }
             }
         }
-
+        
         $this->getResponse();
+    }
+
+    public function hasInputNull($inputs)
+    {
+        $hasNull = false;
+
+        for ($index = 0; $index < count($inputs); $index++) {
+            if ($inputs[$index] == null) {
+                $hasNull = true;
+            }
+        }
+        return $hasNull;
+    }
+
+    public function sanitizeClientInputs($client)
+    {
+        $name = filter_var($client->getName(), FILTER_SANITIZE_SPECIAL_CHARS);
+        $phone = filter_var($client->getPhone(), FILTER_SANITIZE_SPECIAL_CHARS);
+        $createdAt = filter_var($client->getCreatedAt(), FILTER_SANITIZE_SPECIAL_CHARS);
+        $updatedAt = filter_var($client->getUpdatedAt(), FILTER_SANITIZE_SPECIAL_CHARS);
+        $sanitizedInputs = [0 => $name, 1 => $phone, 2 => $createdAt, 3 => $updatedAt];
+        return $sanitizedInputs;
     }
 }
