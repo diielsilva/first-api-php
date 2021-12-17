@@ -98,4 +98,22 @@ class Client
         return $result;
     }
 
+    public function deleteClient($id)
+    {
+        $connection = Connection::openConnection();
+        $sql = "DELETE FROM clients WHERE id = ? LIMIT 1";
+        $statement = $connection->prepare($sql);
+        $statement->bindValue(1, $id);
+        $connection->beginTransaction();
+        $statement->execute();
+        $rowCount = $statement->rowCount();
+
+        if ($rowCount != 1) {
+            $connection->rollBack();
+        } else {
+            $connection->commit();
+        }
+        Connection::closeConnection($connection);
+        return $rowCount;
+    }
 }

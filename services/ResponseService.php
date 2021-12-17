@@ -35,7 +35,7 @@ class ResponseService
             $client->setCreatedAt($jsonDecoded["createdAt"]);
             $client->setUpdatedAt($jsonDecoded["updatedAt"]);
 
-            $sanitizedInputs = $this->sanitizeClientInputs($client);
+            $sanitizedInputs = $this->sanitizeInsertClientInputs($client);
             $hasNull = $this->hasInputNull($sanitizedInputs);
 
             if ($hasNull) {
@@ -72,7 +72,7 @@ class ResponseService
         return $hasNull;
     }
 
-    public function sanitizeClientInputs($client)
+    public function sanitizeInsertClientInputs($client)
     {
         $name = filter_var($client->getName(), FILTER_SANITIZE_SPECIAL_CHARS);
         $phone = filter_var($client->getPhone(), FILTER_SANITIZE_SPECIAL_CHARS);
@@ -115,6 +115,48 @@ class ResponseService
             }
         }
 
+        $this->getResponse();
+    }
+
+    public function sanitizeDeleteClient($inputs)
+    {
+        $id = filter_var($inputs["id"], FILTER_SANITIZE_SPECIAL_CHARS);
+        $sanitizedInputs = [0 => $id];
+        return $sanitizedInputs;
+    }
+
+    public function deleteClient()
+    {
+        $this->getResponseHeaders();
+
+        if ($_SERVER["REQUEST_METHOD"] != "DELETE") {
+            $this->resultJson = [
+                "error" => "Método não permitido!"
+            ];
+        } else {
+            $jsonDecoded = json_decode(file_get_contents("php://input"), true);
+            $sanitizedInputs = $this->sanitizeDeleteClient($jsonDecoded);
+            $hasNull = $this->hasInputNull($sanitizedInputs);
+
+            if ($hasNull) {
+                $this->resultJson = [
+                    "error" => "Inputs inválidos, tente novamente!"
+                ];
+            } else {
+                $client = new Client();
+                $result = $client->deleteClient($sanitizedInputs[0]);
+
+                if ($result != 1) {
+                    $this->resultJson = [
+                        "error" => "Cliente não encontrado!"
+                    ];
+                } else {
+                    $this->resultJson = [
+                        "message" => "Cliente removido com sucesso!"
+                    ];
+                }
+            }
+        }
         $this->getResponse();
     }
 }
